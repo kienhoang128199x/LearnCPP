@@ -16,53 +16,37 @@
 #include <fstream>
 #include "lib.h"
 
+
+#define PARENT_PROCESS 0
+
+
+const char *PATH = "/home/kienhoang/WORKSPACE/LearnCPPGitHub/ecallApp.exe";
+const char *CMD = "c";
+const char *COMMENT = "on monday";
+
 using namespace std;
-void display()
-{
-    cout<<"display function"<<endl;
-}
 
-int count(int x, int y)
-{
-    cout<<x+y<<endl;
-    return x+y;
-}
-
-void (*fp)(void);
-int (*fp2)(int, int);
 int main()
 {
-    fp = display;
-    fp();
-    fp2 = count;
-    cout<<" "<<fp2(1,2)<<endl;
+    unsigned int mPid{0};
+    mPid = fork();
+    if (PARENT_PROCESS == mPid) // parent process
+    {
+        cout << "This is main process" << endl;
+    }
+    else // child process
+    {
+        execl(PATH, CMD, COMMENT, NULL);
+
+        
+    }
+
     return 0;
 }
 
 
 #if 0
 //------------------------#if0---------------------------------------------------------
-const char *path = "/home/kienhoang/Delete/LearnCPP/ecallApp.exe";
-const char *cmd = "c";
-const char *comment = "on monday";
-
-int main()
-{
-    unsigned int mPid{0};
-    mPid = fork();
-    if (mPid == 0) // parent process
-    {
-        cout << "This is main process" << endl;
-    }
-    else // child process
-    {
-        execl(path, cmd, comment, NULL);
-
-        return 0;
-    }
-}
-
-
 
 #include <bits/stdc++.h>
 #include <iostream>
