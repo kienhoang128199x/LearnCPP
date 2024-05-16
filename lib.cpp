@@ -1,12 +1,12 @@
 #include "lib.h"
 using namespace std;
-
+#define SHMGET_ERROR -1
 SlddReceiver::SlddReceiver()
 {
     cout<<"SlddReceiver create shared memory"<<endl;
 
     shmId = shmget(SHM_KEY, sizeof(shmSegment), 0644 | IPC_CREAT);
-    if (shmId == -1)
+    if (shmId == SHMGET_ERROR)
     {
         cout<<"shmget error\n"<<endl;
     }
@@ -42,11 +42,12 @@ SlddReceiver::~SlddReceiver()
     }
 }
 
-void SlddReceiver::printString()
+void SlddReceiver:: printString()
 {
     while(pShm->strComplete == false);
     cout<<"print string: "<<endl;
     cout<<pShm->buf<<endl;
+    pShm->strComplete =false;
 }
 
 void SlddReceiver::printNumber()
@@ -87,13 +88,13 @@ SlddSender::~SlddSender()
     }
 }
 
-void SlddSender::sendString(unsigned int count, string data)
+void SlddSender::sendString(string data)
 {
     cout<<"Write string data"<<endl;
 
     pShm->strComplete = false;
     char *pBuf = pShm->buf;
-    memcpy(pBuf, data.c_str(), count);
+    memcpy(pBuf, data.c_str(), data.size());
     pShm->strComplete = true;
 
 }

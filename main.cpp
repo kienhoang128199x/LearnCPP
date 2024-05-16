@@ -16,9 +16,7 @@
 #include <fstream>
 #include "lib.h"
 
-
 #define PARENT_PROCESS 0
-
 
 const char *PATH = "/home/kienhoang/WORKSPACE/LearnCPPGitHub/ecallApp.exe";
 const char *CMD = "c";
@@ -26,24 +24,56 @@ const char *COMMENT = "run chat application";
 
 using namespace std;
 
+void countUp()
+{
+    cout<<"start countUp(). thread_id == "<<this_thread::get_id()<< endl;
+    int num{0};
+    while (true)
+    {
+        usleep(1000000);
+        cout << num++ << endl;
+    }
+}
+
+void showMessage()
+{
+    cout<<"start showMessage(). thread_id == "<<this_thread::get_id()<< endl;
+    SlddReceiver slr;
+    while (true)
+    {
+        slr.printString();
+        // usleep(100000);
+    }
+}
+
 int main()
 {
+    cout<<"start main(). thread_id == "<<this_thread::get_id()<< endl;
     unsigned int mPid{0};
+    std::thread countUpTh(countUp);
+    std::thread showMsgTh(showMessage);
+    if(countUpTh.joinable())
+    {
+        countUpTh.join();
+    }
+    if(showMsgTh.joinable())
+    {
+        showMsgTh.join();
+    }    
+    /*
     mPid = fork();
     if (PARENT_PROCESS == mPid) // parent process
     {
-        cout << "This is main process" << endl;
+        cout << "This is main process. PID == "<<getpid()<<" and thread_id == "<<this_thread::get_id()<< endl;
     }
     else // child process
     {
         execl(PATH, CMD, COMMENT, NULL);
-
-        
     }
+    */
 
     return 0;
 }
-
 
 #if 0
 //------------------------#if0---------------------------------------------------------

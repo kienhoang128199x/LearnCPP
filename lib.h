@@ -24,7 +24,7 @@ class SlddSender
 
     SlddSender();
     ~SlddSender();
-    void sendString(unsigned int count, std::string data);
+    void sendString(std::string data);
     void sendNumber(int num);
     private:
 
