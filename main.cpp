@@ -22,7 +22,7 @@
 
 const char *PATH = "/home/kienhoang/WORKSPACE/LearnCPPGitHub/ecallApp.exe";
 const char *CMD = "c";
-const char *COMMENT = "run eu ecall";
+const char *COMMENT = "run chat application";
 
 using namespace std;
 
