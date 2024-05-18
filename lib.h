@@ -9,7 +9,7 @@
 #include <string.h>
 #define BUF_SIZE 1024
 #define SHM_KEY 0x1234
-
+#define NAME "kienhoang"
 struct shmSegment
 {
     bool strComplete;
