@@ -19,6 +19,249 @@
 using namespace std;
 
 
+// Class that represents a simple thread pool
+class ThreadPool
+{
+
+private:
+    // Vector to store worker threads
+    vector<thread> threads_;
+
+    // Queue of tasks
+    queue<function<void()>> tasks_;
+
+    // Mutex to synchronize access to shared data
+    mutex queue_mutex_;
+
+    // Condition variable to signal changes in the state of
+    // the tasks queue
+    condition_variable cv_;
+
+    // Flag to indicate whether the thread pool should stop
+    // or not
+    bool stop_ = false;
+
+public:
+    // // Constructor to creates a thread pool with given number of threads
+    ThreadPool(size_t num_threads = thread::hardware_concurrency()) // Returns the number of concurrent threads supported by the implementation.
+    // The value should be considered only a hint.
+    {
+        // Creating worker threads
+        for (size_t i = 0; i < num_threads; ++i)
+        {
+            threads_.emplace_back([this]
+            { 
+				while (true) 
+                { 
+					function<void()> task; // same as void (*task)();
+					// The reason for putting the below code here is to unlock the queue before executing the task so that other threads can perform enqueue tasks 
+					{ 
+						// Locking the queue so that data can be shared safely 
+						unique_lock<mutex> lock(queue_mutex_); 
+
+						// Waiting until there is a task to execute (message is enqueued then cv_.notify_one()) or the pool is stopped 
+						cv_.wait(lock, [this] 
+                        { 
+							return (!tasks_.empty() || stop_); 
+						}); 
+
+						// exit the thread in case the pool is stopped and there are no tasks
+                        if (stop_ && tasks_.empty())
+                        {
+                            return;
+                        }
+
+                        // Get the next task from the queue 
+						task = move(tasks_.front()); 
+						tasks_.pop(); 
+					} 
+
+					task(); 
+				} 
+            });
+        }
+    }
+
+    // Destructor to stop the thread pool
+    ~ThreadPool()
+    {
+        {
+            // Lock the queue to update the stop flag safely
+            unique_lock<mutex> lock(queue_mutex_);
+            stop_ = true;
+        }
+
+        // Notify all threads
+        cv_.notify_all();
+
+        // Joining all worker threads to ensure they have completed their tasks
+        for (auto &thread : threads_)
+        {
+            thread.join();
+        }
+    }
+
+    // Enqueue task for execution by the thread pool
+    void enqueue(function<void()> task)
+    {
+        {
+            unique_lock<std::mutex> lock(queue_mutex_);
+            tasks_.emplace(move(task));
+        }
+        cv_.notify_one();
+    }
+};
+
+int main()
+{
+    // Create a thread pool with 4 threads
+    ThreadPool pool(4);
+
+    // Enqueue tasks for execution
+    for (int i = 0; i < 15; ++i)
+    {
+        pool.enqueue([i]
+                     { 
+			cout << "Task " << i << " is running on thread "
+				<< this_thread::get_id() << endl; 
+			// Simulate some work 
+			this_thread::sleep_for( 
+				chrono::milliseconds(100)); });
+    }
+
+    return 0;
+}
+
+
+
+#if 0
+//------------------------#if0---------------------------------------------------------
+
+
+
+int volume{0};
+std::mutex mt;
+
+
+
+/*
+    Name: notify_one
+    Copyright: LG
+    Author: kien4.hoang
+    Date: 22/11/21 11:04
+    Description: Demonstrate how to use notify_one method of condition variable
+*/
+
+#include <algorithm>
+#include <thread>
+#include <mutex>
+#include <chrono>
+#include <condition_variable>
+
+using namespace std;
+
+mutex mtx;
+condition_variable consume;
+
+void eatCake(int id)
+{
+    std::unique_lock<std::mutex> unl(mtx); // lock for running cout in order
+    cout << "Consumer number " << id << " waiting for a cake..." << endl;
+
+    consume.wait(unl);
+    cout << "Consumer number " << id << " has already eaten a cake" << endl;
+}
+
+void makeCake()
+{
+    std::unique_lock<std::mutex> unl(mtx);
+    cout << "Producer makes cakes" << endl;
+    consume.notify_one();
+}
+
+int main()
+{
+    // create 5 consumer threads for eating cake
+    thread consumers[5];
+    thread producer[5];
+    for (int i = 0; i < 5; ++i)
+    {
+        consumers[i] = thread(eatCake, i);
+    }
+
+    // delay time for 5 consumer threads done
+    this_thread::sleep_for(chrono::milliseconds(500));
+
+    // run thread producer, notify_one to one of 5 consumer which are waiting
+    // for (int i = 0; i < 5; ++i)
+    // {
+    //     int x{0};
+    //     cout << "input number" << endl;
+    //     cin >> x;
+    //     producer[i] = thread(makeCake);
+    // }
+    consume.notify_all();
+    // main thread waiting for other thread
+    for (int i = 0; i < 5; ++i)
+    {
+        if(producer[i].joinable())
+        {
+            producer[i].join();
+        }
+        else
+        {
+            // cout<<"producer["<<i<<"] not joinable"<<endl;
+        }
+    }
+    for (int i = 0; i < 5; ++i)
+    {
+        if(consumers[i].joinable())
+        {
+            consumers[i].join();
+        }
+        else
+        {
+            // cout<<"consumers["<<i<<"] not joinable"<<endl;
+        }
+    }
+
+    // NOTE THAT PROGRAM WILL STUCK BECAUSE 4 CONSUMER STILL WAITING
+    return 0;
+}
+
+
+
+void increaseVolume()
+{
+
+    cout << "this_thread::get_id() == " << this_thread::get_id() << endl;
+    for (int i{0}; i < 100000; i++)
+    {
+        mt.lock();
+        volume++;
+        mt.unlock();
+    }
+}
+
+int main()
+{
+    cout << "run main.exe, pid == " << getpid() << " ; this_thread::thread_id() == " << this_thread::get_id() << endl;
+    std::thread th1(increaseVolume), th2(increaseVolume);
+    if (th1.joinable())
+    {
+        th1.join();
+    }
+    if (th2.joinable())
+    {
+        th2.join();
+    }
+    cout << "volume == " << volume << endl;
+    return 0;
+}
+
+
+
+
 /////////////////////////////////////////////////////////////////
 /**
  * Observer design pattern implementation start
@@ -92,10 +335,6 @@ int main()
 }
 
 /////////////Observer design pattern implementation end///////////////////////////////////////////////////
-
-
-#if 0
-//------------------------#if0---------------------------------------------------------
 
 #include <bits/stdc++.h>
 #include <algorithm>
@@ -375,125 +614,6 @@ template <typename T,typename...Types> void printLog(T var1,Types...varn)
 	printLog(varn...);
 }
 
-
-
-// Class that represents a simple thread pool
-class ThreadPool
-{
-
-private:
-    // Vector to store worker threads
-    vector<thread> threads_;
-
-    // Queue of tasks
-    queue<function<void()>> tasks_;
-
-    // Mutex to synchronize access to shared data
-    mutex queue_mutex_;
-
-    // Condition variable to signal changes in the state of
-    // the tasks queue
-    condition_variable cv_;
-
-    // Flag to indicate whether the thread pool should stop
-    // or not
-    bool stop_ = false;
-
-public:
-    // // Constructor to creates a thread pool with given
-    // number of threads
-    ThreadPool(size_t num_threads = thread::hardware_concurrency()) // Returns the number of concurrent threads supported by the implementation. The value should be considered only a hint.
-    {
-
-        // Creating worker threads
-        for (size_t i = 0; i < num_threads; ++i)
-        {
-            threads_.emplace_back([this]
-                                  { 
-				while (true) { 
-					function<void()> task; 
-					// The reason for putting the below code 
-					// here is to unlock the queue before 
-					// executing the task so that other 
-					// threads can perform enqueue tasks 
-					{ 
-						// Locking the queue so that data 
-						// can be shared safely 
-						unique_lock<mutex> lock( 
-							queue_mutex_); 
-
-						// Waiting until there is a task to 
-						// execute or the pool is stopped 
-						cv_.wait(lock, [this] { 
-							return !tasks_.empty() || stop_; 
-						}); 
-
-						// exit the thread in case the pool 
-						// is stopped and there are no tasks 
-						if (stop_ && tasks_.empty()) { 
-							return; 
-						} 
-
-						// Get the next task from the queue 
-						task = move(tasks_.front()); 
-						tasks_.pop(); 
-					} 
-
-					task(); 
-				} });
-        }
-    }
-
-    // Destructor to stop the thread pool
-    ~ThreadPool()
-    {
-        {
-            // Lock the queue to update the stop flag safely
-            unique_lock<mutex> lock(queue_mutex_);
-            stop_ = true;
-        }
-
-        // Notify all threads
-        cv_.notify_all();
-
-        // Joining all worker threads to ensure they have
-        // completed their tasks
-        for (auto &thread : threads_)
-        {
-            thread.join();
-        }
-    }
-
-    // Enqueue task for execution by the thread pool
-    void enqueue(function<void()> task)
-    {
-        {
-            unique_lock<std::mutex> lock(queue_mutex_);
-            tasks_.emplace(move(task));
-        }
-        cv_.notify_one();
-    }
-};
-
-int main()
-{
-    // Create a thread pool with 4 threads
-    ThreadPool pool(4);
-
-    // Enqueue tasks for execution
-    for (int i = 0; i < 5; ++i)
-    {
-        pool.enqueue([i]
-                     { 
-			cout << "Task " << i << " is running on thread "
-				<< this_thread::get_id() << endl; 
-			// Simulate some work 
-			this_thread::sleep_for( 
-				chrono::milliseconds(100)); });
-    }
-
-    return 0;
-}
 
 
 /*
