@@ -18,7 +18,195 @@
 #include <vector>
 using namespace std;
 
+/**
+ * Proxy design pattern code example
+*/
 
+// The abstract base class for pure virtual method
+class IImage
+{
+public:
+    virtual void show() = 0;
+};
+
+// The real class that will run actual method .Ex show()
+class Image : public IImage
+{
+private:
+    string fileName;
+
+public:
+    Image(string s) : fileName{s}
+    {
+        cout << "Load image " << s << endl;
+    }
+    void show()
+    {
+        cout << "show image " << fileName << endl;
+    }
+    ~Image()
+    {
+        cout<<"Image's destructor"<<endl;
+    }
+};
+
+// The proxy class that will create real object when needed and request method
+class ProxyImage : public IImage
+{
+private:
+    Image *pImage;
+    string fileName;
+
+public:
+    ProxyImage(string s) : fileName{fileName}, pImage{nullptr}
+    {
+        cout<<"ProxyImage's constructor"<<endl;
+    }
+    void show()
+    {
+        if(nullptr == pImage)
+        {
+            pImage = new Image(fileName); // only create object when needed
+        }
+
+        pImage->show();
+    }
+    ~ProxyImage()
+    {
+        delete pImage;
+    }
+};
+
+int main()
+{
+    ProxyImage pImg("dog image");
+    pImg.show();
+}
+
+#if 0
+//------------------------#if0---------------------------------------------------------
+
+
+// The following code implements two kinds of proxy: the virtual proxy described
+// in the Motivation section, and a proxy implemented with doesNotUnderstand:.7
+// 1. A virtual proxy. The Graphic class defines the interface for graphical
+// objects:
+class Graphic
+{
+public:
+    virtual ~Graphic();
+    virtual void Draw(const Point &at) = 0;
+    virtual void HandleMouse(Event &event) = 0;
+    virtual const Point &GetExtent() = 0;
+    virtual void Load(istream &from) = 0;
+    virtual void Save(ostream &to) = 0;
+
+protected:
+    Graphic();
+};
+// The Image class implements the Graphic interface to display image files.
+// Image overrides HandleMouse to let users resize the image interactively.
+// real class
+class Image : public Graphic
+{
+public:
+    Image(const char *file); // loads image from a file
+    virtual ~Image();
+    virtual void Draw(const Point &at);
+    virtual void HandleMouse(Event &event);
+    virtual const Point &GetExtent();
+    virtual void Load(istream &from);
+    virtual void Save(ostream &to);
+
+private:
+    // ...
+};
+// Design Patterns: Elements of Reusable Object-Oriented Software
+// ImageProxy has the same interface as Image:
+class ImageProxy : public Graphic
+{
+public:
+    ImageProxy(const char *imageFile);
+    virtual ~ImageProxy();
+    virtual void Draw(const Point &at);
+    virtual void HandleMouse(Event &event);
+    virtual const Point &GetExtent();
+    virtual void Load(istream &from);
+    virtual void Save(ostream &to);
+
+protected:
+    Image *GetImage();
+
+private:
+    Image *_image;
+    Point _extent;
+    char *_fileName;
+};
+// The constructor saves a local copy of the name of the file that stores the
+// image, and it initializes _extent and _image:
+ImageProxy::ImageProxy(const char *fileName)
+{
+    _extent = Point::Zero; // don't know extent yet
+    _image = 0;
+}
+Image *ImageProxy::GetImage()
+{
+    if (_image == 0)
+    {
+        _image = new Image(_fileName);
+    }
+    return _image;
+}
+// The implementation of GetExtent returns the cached extent if possible;
+// otherwise the image is loaded from the file. Draw loads the image, and
+// HandleMouse forwards the event to the real image.
+// Design Patterns: Elements of Reusable Object-Oriented Software
+// 242
+const Point &ImageProxy::GetExtent()
+{
+    if (_extent == Point::Zero)
+    {
+        _extent = GetImage()->GetExtent();
+    }
+    return _extent;
+}
+void ImageProxy::Draw(const Point &at)
+{
+    GetImage()->Draw(at);
+}
+void ImageProxy::HandleMouse(Event &event)
+{
+    GetImage()->HandleMouse(event);
+}
+// The Save operation saves the cached image extent and the image file name
+// to a stream. Load retrieves this information and initializes the
+// corresponding members.
+void ImageProxy::Save(ostream &to)
+{
+    to << _extent << _fileName;
+}
+void ImageProxy::Load(istream &from)
+{
+    from >> _extent >> _fileName;
+}
+// Finally, suppose we have a class TextDocument that can contain Graphic
+// objects:
+class TextDocument
+{
+public:
+    TextDocument();
+    void Insert(Graphic *);
+    // ...
+};
+// We can insert an ImageProxy into a text document like this:
+// TextDocument* text = new TextDocument;
+// Design Patterns: Elements of Reusable Object-Oriented Software
+// 243
+// ...
+text->Insert(new ImageProxy("anImageFileName"));
+
+
+/////////////////////////////////////////////////////////
 // Class that represents a simple thread pool
 class ThreadPool
 {
@@ -132,10 +320,6 @@ int main()
     return 0;
 }
 
-
-
-#if 0
-//------------------------#if0---------------------------------------------------------
 
 
 
@@ -2693,124 +2877,6 @@ int main()
 }
 
 
-
-// The following code implements two kinds of proxy: the virtual proxy described
-// in the Motivation section, and a proxy implemented with doesNotUnderstand:.7
-// 1. A virtual proxy. The Graphic class defines the interface for graphical
-// objects:
-class Graphic
-{
-public:
-    virtual ~Graphic();
-    virtual void Draw(const Point &at) = 0;
-    virtual void HandleMouse(Event &event) = 0;
-    virtual const Point &GetExtent() = 0;
-    virtual void Load(istream &from) = 0;
-    virtual void Save(ostream &to) = 0;
-
-protected:
-    Graphic();
-};
-// The Image class implements the Graphic interface to display image files.
-// Image overrides HandleMouse to let users resize the image interactively.
-// real class
-class Image : public Graphic
-{
-public:
-    Image(const char *file); // loads image from a file
-    virtual ~Image();
-    virtual void Draw(const Point &at);
-    virtual void HandleMouse(Event &event);
-    virtual const Point &GetExtent();
-    virtual void Load(istream &from);
-    virtual void Save(ostream &to);
-
-private:
-    // ...
-};
-// Design Patterns: Elements of Reusable Object-Oriented Software
-// ImageProxy has the same interface as Image:
-class ImageProxy : public Graphic
-{
-public:
-    ImageProxy(const char *imageFile);
-    virtual ~ImageProxy();
-    virtual void Draw(const Point &at);
-    virtual void HandleMouse(Event &event);
-    virtual const Point &GetExtent();
-    virtual void Load(istream &from);
-    virtual void Save(ostream &to);
-
-protected:
-    Image *GetImage();
-
-private:
-    Image *_image;
-    Point _extent;
-    char *_fileName;
-};
-// The constructor saves a local copy of the name of the file that stores the
-// image, and it initializes _extent and _image:
-ImageProxy::ImageProxy(const char *fileName)
-{
-    _extent = Point::Zero; // don't know extent yet
-    _image = 0;
-}
-Image *ImageProxy::GetImage()
-{
-    if (_image == 0)
-    {
-        _image = new Image(_fileName);
-    }
-    return _image;
-}
-// The implementation of GetExtent returns the cached extent if possible;
-// otherwise the image is loaded from the file. Draw loads the image, and
-// HandleMouse forwards the event to the real image.
-// Design Patterns: Elements of Reusable Object-Oriented Software
-// 242
-const Point &ImageProxy::GetExtent()
-{
-    if (_extent == Point::Zero)
-    {
-        _extent = GetImage()->GetExtent();
-    }
-    return _extent;
-}
-void ImageProxy::Draw(const Point &at)
-{
-    GetImage()->Draw(at);
-}
-void ImageProxy::HandleMouse(Event &event)
-{
-    GetImage()->HandleMouse(event);
-}
-// The Save operation saves the cached image extent and the image file name
-// to a stream. Load retrieves this information and initializes the
-// corresponding members.
-void ImageProxy::Save(ostream &to)
-{
-    to << _extent << _fileName;
-}
-void ImageProxy::Load(istream &from)
-{
-    from >> _extent >> _fileName;
-}
-// Finally, suppose we have a class TextDocument that can contain Graphic
-// objects:
-class TextDocument
-{
-public:
-    TextDocument();
-    void Insert(Graphic *);
-    // ...
-};
-// We can insert an ImageProxy into a text document like this:
-// TextDocument* text = new TextDocument;
-// Design Patterns: Elements of Reusable Object-Oriented Software
-// 243
-// ...
-text->Insert(new ImageProxy("anImageFileName"));
 
 -------------------------------------------------------------------
 
