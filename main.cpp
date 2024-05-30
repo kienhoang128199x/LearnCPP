@@ -18,6 +18,29 @@
 #include <vector>
 using namespace std;
 
+int main()
+{
+    cout << "main run, pid == " << getpid() << "  thid == " << this_thread::get_id << endl;
+    int x{0};
+    string s{""};
+    while (true)
+    {
+        for (int i{0}; i < 100000000; i++)
+        {
+            for (int i{0}; i < 10000000; i++)
+            {
+                cout << x++ << endl;
+                cout << s << endl;
+            }
+        }
+    }
+    return 0;
+}
+
+#if 0
+//------------------------#if0---------------------------------------------------------
+
+
 /**
  * Proxy design pattern code example
 */
@@ -82,9 +105,6 @@ int main()
     ProxyImage pImg("dog image");
     pImg.show();
 }
-
-#if 0
-//------------------------#if0---------------------------------------------------------
 
 
 // The following code implements two kinds of proxy: the virtual proxy described
