@@ -20,7 +20,7 @@ using namespace std;
 
 int main()
 {
-    cout<<"hello Kien"<<endl;
+    cout<<"hello KienHoang"<<endl;
     return 0;
 }
 
