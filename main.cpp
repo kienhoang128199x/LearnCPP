@@ -20,6 +20,16 @@ using namespace std;
 
 int main()
 {
+    cout<<"hello Kien"<<endl;
+    return 0;
+}
+
+
+#if 0
+//------------------------#if0---------------------------------------------------------
+
+int main()
+{
     cout << "main run, pid == " << getpid() << "  thid == " << this_thread::get_id << endl;
     int x{0};
     string s{""};
@@ -37,8 +47,6 @@ int main()
     return 0;
 }
 
-#if 0
-//------------------------#if0---------------------------------------------------------
 
 
 /**
