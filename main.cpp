@@ -20,7 +20,7 @@ using namespace std;
 
 int main()
 {
-    cout<<"hello KienHoang128"<<endl;
+    cout<<"now is 21.06"<<endl;
     return 0;
 }
 
